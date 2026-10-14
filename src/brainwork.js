@@ -118,9 +118,53 @@ export function initBrainwork(updateCalendar) {
       details.textContent = `${entry.date} · ${entry.minutes} min`;
 
       info.append(title, details);
-      item.append(info);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "secondary-button delete-walk-button";
+      deleteButton.textContent = "Poista";
+      deleteButton.setAttribute(
+        "aria-label",
+        `Poista älytoimintakirjaus ${entry.activity}`,
+      );
+
+      deleteButton.addEventListener("click", async () => {
+        await deleteBrainwork(entry);
+      });
+
+      item.append(info, deleteButton);
       brainworkList.append(item);
     });
+  }
+
+  async function deleteBrainwork(entry) {
+    const confirmed = confirm(
+      `Haluatko varmasti poistaa älytoimintakirjauksen "${entry.activity}" (${entry.date})?`,
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("brainwork")
+      .delete()
+      .eq("id", entry.id)
+      .eq("diary_id", diaryId);
+
+    if (error) {
+      console.error("Älytoimintakirjauksen poistaminen epäonnistui:", error);
+      alert("Kirjauksen poistaminen epäonnistui. Yritä uudelleen.");
+      return;
+    }
+
+    const loaded = await loadBrainwork();
+
+    if (!loaded) return;
+
+    renderBrainwork();
+
+    if (updateCalendar) {
+      updateCalendar();
+    }
   }
 
   function subscribeToBrainwork() {
@@ -136,7 +180,6 @@ export function initBrainwork(updateCalendar) {
           event: "*",
           schema: "public",
           table: "brainwork",
-          filter: `diary_id=eq.${diaryId}`,
         },
         async () => {
           const loaded = await loadBrainwork();

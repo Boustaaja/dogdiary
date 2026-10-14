@@ -25,7 +25,7 @@ export function updateSummary(walks) {
   document.querySelector("#walk-count").textContent =
     `${todayWalks.length} / 3`;
 
-  document.querySelector("#walk-time").textContent = `${actualMinutes} min`;
+  document.querySelector("#walk-time").textContent = `${creditedMinutes} min`;
 
   const creditedTimeElement = document.querySelector("#credited-time");
 

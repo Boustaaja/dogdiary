@@ -136,7 +136,7 @@ class="primary-button logout-button"
       </div>
 
 <div class="calendar-legend">
-  <span>⚡ Lenkit – Tavoite: 3 lenkkiä ja 120 min päivässä</span>
+  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 90 min päivässä</span>
   <span>🦴 Ruoka – Tavoite: 3 täyttä annosta päivässä</span>
   <span>💡 Aivojumppa – Tavoite: 15 min päivässä</span>
 </div>
@@ -146,12 +146,33 @@ class="primary-button logout-button"
       <section class="panel">
         <div class="panel-header">
           <h3>Päivän lenkit</h3>
-          <span class="muted">Tavoite: 3 lenkkiä</span>
+          <span class="muted">Tavoite: väh. 3 lenkkiä / 90 min.</span>
         </div>
 
         <div class="progress-track" aria-label="Lenkkien eteneminen">
           <div class="progress-fill" id="walk-progress"></div>
         </div>
+
+        <div class="walk-timer section-spacer">
+  <p class="muted">Lenkin ajastin</p>
+  <p id="walk-timer" class="walk-timer-display">00:00:00</p>
+
+  <div class="form-actions">
+    <button type="button" id="start-walk-timer" class="primary-button">
+      Käynnistä lenkki
+    </button>
+    <button
+      type="button"
+      id="stop-walk-timer"
+      class="secondary-button"
+      disabled
+    >
+      Lopeta lenkki
+    </button>
+  </div>
+
+  <p id="walk-timer-status" class="muted"></p>
+</div>
 
         <div class="walk-list section-spacer" id="walk-list">
           <p class="muted">Lenkkejä ei ole vielä kirjattu.</p>
@@ -343,7 +364,14 @@ function renderWeekCalendar() {
             ? "yellow"
             : "green";
 
-      mealColor = meals >= 3 ? "green" : meals > 0 ? "yellow" : "red";
+      mealColor =
+        meals >= 3
+          ? "green"
+          : meals >= 2
+            ? "yellow"
+            : meals >= 1
+              ? "red"
+              : "neutral";
     } else if (isToday) {
       walkColor =
         dayWalks.length >= 3 && creditedMinutes >= 120
@@ -354,7 +382,14 @@ function renderWeekCalendar() {
               ? "red"
               : "neutral";
 
-      mealColor = meals >= 3 ? "green" : meals > 0 ? "yellow" : "neutral";
+      mealColor =
+        meals >= 3
+          ? "green"
+          : meals >= 2
+            ? "yellow"
+            : meals >= 1
+              ? "red"
+              : "neutral";
     }
 
     const day = document.createElement("div");

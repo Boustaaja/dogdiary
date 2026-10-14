@@ -21,7 +21,7 @@ export function initWalks(updateCalendar) {
 
     const email = data.user.email?.toLowerCase();
 
-    // Vaihda näihin Katjan ja Antin oikeat kirjautumissähköpostit.
+    // Käytetään kirjautunutta käyttäjää, jos se on tunnistettu.
     if (email === "boustaaja@hotmail.com") return "Katja";
     if (email === "godek_88@hotmail.com") return "Antti";
 
@@ -64,6 +64,7 @@ export function initWalks(updateCalendar) {
       duration: walk.duration,
       ballMinutes: walk.ball_minutes,
       fastMinutes: walk.fast_minutes,
+      notes: walk.notes,
       portion: walk.portion,
     }));
 
@@ -77,6 +78,82 @@ export function initWalks(updateCalendar) {
 
   const walkList = document.querySelector("#walk-list");
   const addWalkButton = document.querySelector("#add-walk");
+
+  const walkTimerDisplay = document.querySelector("#walk-timer");
+  const startWalkTimerButton = document.querySelector("#start-walk-timer");
+  const stopWalkTimerButton = document.querySelector("#stop-walk-timer");
+  const walkTimerStatus = document.querySelector("#walk-timer-status");
+
+  let walkStartTimestamp = null;
+  let walkElapsedMs = 0;
+  let walkTimerInterval = null;
+  let measuredWalk = null;
+
+  function getCurrentTime() {
+    const now = new Date();
+
+    return (
+      String(now.getHours()).padStart(2, "0") +
+      ":" +
+      String(now.getMinutes()).padStart(2, "0")
+    );
+  }
+
+  function updateWalkTimer() {
+    const currentSessionMs =
+      walkStartTimestamp !== null ? Date.now() - walkStartTimestamp : 0;
+
+    const elapsedSeconds = Math.floor(
+      (walkElapsedMs + currentSessionMs) / 1000,
+    );
+
+    const hours = Math.floor(elapsedSeconds / 3600);
+    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+    const seconds = elapsedSeconds % 60;
+
+    walkTimerDisplay.textContent =
+      `${String(hours).padStart(2, "0")}:` +
+      `${String(minutes).padStart(2, "0")}:` +
+      `${String(seconds).padStart(2, "0")}`;
+  }
+
+  startWalkTimerButton.addEventListener("click", () => {
+    if (walkStartTimestamp !== null || measuredWalk !== null) return;
+
+    walkStartTimestamp = Date.now();
+    walkElapsedMs = 0;
+
+    measuredWalk = {
+      start: getCurrentTime(),
+      startTimestamp: walkStartTimestamp,
+    };
+
+    startWalkTimerButton.disabled = true;
+    stopWalkTimerButton.disabled = false;
+    walkTimerStatus.textContent = "Lenkki on käynnissä.";
+
+    updateWalkTimer();
+    walkTimerInterval = setInterval(updateWalkTimer, 1000);
+  });
+
+  stopWalkTimerButton.addEventListener("click", () => {
+    if (walkStartTimestamp === null || measuredWalk === null) return;
+
+    walkElapsedMs = Date.now() - walkStartTimestamp;
+    walkStartTimestamp = null;
+
+    clearInterval(walkTimerInterval);
+    walkTimerInterval = null;
+
+    measuredWalk.end = getCurrentTime();
+    measuredWalk.duration = Math.max(1, Math.round(walkElapsedMs / 60000));
+
+    startWalkTimerButton.disabled = true;
+    stopWalkTimerButton.disabled = true;
+    walkTimerStatus.textContent = `Lenkki pysäytetty. Kesto ${measuredWalk.duration} min. Voit nyt lisätä lenkin.`;
+
+    updateWalkTimer();
+  });
 
   addWalkButton.disabled = true;
   addWalkButton.title = "Ladataan yhteistä päiväkirjaa...";
@@ -141,6 +218,7 @@ export function initWalks(updateCalendar) {
       duration: walk.duration,
       ball_minutes: walk.ballMinutes,
       fast_minutes: walk.fastMinutes,
+      notes: walk.notes,
       portion: walk.portion,
     });
 
@@ -209,6 +287,13 @@ export function initWalks(updateCalendar) {
 
       info.append(title, details);
 
+      if (walk.notes?.trim()) {
+        const notes = document.createElement("p");
+        notes.className = "walk-notes";
+        notes.textContent = walk.notes;
+        info.append(notes);
+      }
+
       const duration = document.createElement("span");
       duration.className = "walk-duration";
 
@@ -250,7 +335,7 @@ export function initWalks(updateCalendar) {
 
     const form = document.createElement("form");
     form.id = "walk-form";
-    form.className = "panel section-spacer";
+    form.className = "panel section-spacer walk-timer";
 
     form.innerHTML = `
       <div class="panel-header">
@@ -295,9 +380,17 @@ export function initWalks(updateCalendar) {
         </select>
       </label>
 
-      <p id="walk-preview" class="muted">
-        Valitse lähtö- ja paluuaika.
-      </p>
+      <div class="form-field">
+  <label for="walk-notes">Muistiinpano (valinnainen)</label>
+  <textarea
+    id="walk-notes"
+    name="notes"
+    rows="3"
+    placeholder="Esim. koiralla oli vatsa sekaisin..."
+  ></textarea>
+
+  <p id="walk-preview" class="muted"></p>
+</div>
 
       <div class="form-actions">
         <button class="primary-button" type="submit">Tallenna lenkki</button>
@@ -311,6 +404,11 @@ export function initWalks(updateCalendar) {
 
     const startInput = form.elements.start;
     const endInput = form.elements.end;
+
+    if (measuredWalk) {
+      startInput.value = measuredWalk.start;
+      endInput.value = measuredWalk.end || "";
+    }
 
     startInput.addEventListener("input", () => {
       if (!startInput.value) return;
@@ -372,12 +470,9 @@ export function initWalks(updateCalendar) {
         return;
       }
 
-      const creditedMinutes = duration + ballMinutes + fastMinutes;
-      const category = getWalkCategory(duration);
+      const category = getWalkCategory(duration + ballMinutes + fastMinutes);
 
-      preview.textContent =
-        `Kesto ${duration} min · ${category.name} · ` +
-        `Tavoitteeseen ${creditedMinutes} min`;
+      preview.textContent = `Kesto ${duration} min · ${category.name}`;
     }
 
     startInput.addEventListener("input", updatePreview);
@@ -386,11 +481,18 @@ export function initWalks(updateCalendar) {
     fastMinutesInput.addEventListener("input", updatePreview);
 
     form.querySelector("#cancel-walk").addEventListener("click", () => {
+      clearInterval(walkTimerInterval);
+      walkTimerInterval = null;
       form.remove();
     });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+
+      if (walkStartTimestamp !== null) {
+        preview.textContent = "Lopeta lenkki ennen tallentamista.";
+        return;
+      }
 
       if (!startInput.value || !endInput.value) return;
 
@@ -398,17 +500,23 @@ export function initWalks(updateCalendar) {
       const ballMinutes = Number(ballMinutesInput.value);
       const fastMinutes = Number(fastMinutesInput.value);
 
+      if (duration <= 0 || duration >= 24 * 60) {
+        alert("Tarkista lenkin lähtö- ja paluuaika.");
+        return;
+      }
+
       if (
-        duration <= 0 ||
-        duration >= 24 * 60 ||
         ballMinutes < 0 ||
         fastMinutes < 0 ||
         !Number.isInteger(ballMinutes) ||
-        !Number.isInteger(fastMinutes) ||
-        ballMinutes + fastMinutes > duration
+        !Number.isInteger(fastMinutes)
       ) {
-        preview.textContent =
-          "Tarkista ajat ja liikuntaminuutit ennen tallentamista.";
+        alert("Liikuntaminuuttien pitää olla kokonaislukuja, vähintään 0.");
+        return;
+      }
+
+      if (ballMinutes + fastMinutes > duration) {
+        alert("Liikuntaminuutit eivät voi ylittää lenkin kokonaiskestoa.");
         return;
       }
 
@@ -423,6 +531,7 @@ export function initWalks(updateCalendar) {
         ballMinutes,
         fastMinutes,
         portion: form.elements.portion.value,
+        notes: form.elements.notes.value.trim(),
       };
 
       const saved = await saveWalk(walk);
@@ -430,6 +539,15 @@ export function initWalks(updateCalendar) {
       if (!saved) return;
 
       form.remove();
+
+      measuredWalk = null;
+      walkElapsedMs = 0;
+
+      walkTimerDisplay.textContent = "00:00:00";
+      walkTimerStatus.textContent = "";
+
+      startWalkTimerButton.disabled = false;
+      stopWalkTimerButton.disabled = true;
     });
   });
 

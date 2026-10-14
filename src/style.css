@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
   font-family: "DM Sans", sans-serif;
@@ -838,4 +838,55 @@ textarea:focus-visible {
     flex-wrap: wrap;
     align-items: flex-start;
   }
+}
+
+#brainwork-form input,
+#brainwork-form select {
+  border-radius: 14px;
+  padding-left: 14px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+.walk-timer {
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--green-light);
+}
+
+.walk-timer-display {
+  margin: 8px 0;
+  font-family: Manrope, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Suurempi koiran kuva isolla näytöllä */
+@media (min-width: 801px) {
+  .dog-avatar-label,
+  #dog-avatar {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+.walk-notes {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.walk-notes::before {
+  content: "“";
+}
+
+.walk-notes::after {
+  content: "”";
 }
