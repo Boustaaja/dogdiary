@@ -1,7 +1,7 @@
 import "./style.css";
-import lightningIcon from "./assets/images/lightning-svgrepo-com.svg";
-import boneIcon from "./assets/images/bone-svgrepo-com.svg";
-import lightbulbIcon from "./assets/images/light-bulb-svgrepo-com.svg";
+import lightningIcon from "./assets/Images/lightning-svgrepo-com.svg";
+import boneIcon from "./assets/Images/bone-svgrepo-com.svg";
+import lightbulbIcon from "./assets/Images/light-bulb-svgrepo-com.svg";
 import { initDogProfile } from "./dogProfile.js";
 import { initBrainwork, getBrainworkEntries } from "./brainwork.js";
 import { initWalks, getWalks } from "./walks.js";
