@@ -151,7 +151,7 @@ class="primary-button logout-button"
       </div>
 
 <div class="calendar-legend">
-  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 90 min päivässä</span>
+  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 120 min päivässä</span>
   <span>🦴 Ruoka – Tavoite: 3 täyttä annosta päivässä</span>
   <span>💡 Aivojumppa – Tavoite: 15 min päivässä</span>
 </div>
@@ -161,7 +161,7 @@ class="primary-button logout-button"
       <section class="panel">
         <div class="panel-header">
           <h3>Päivän lenkit</h3>
-          <span class="muted">Tavoite: väh. 3 lenkkiä / 90 min.</span>
+          <span class="muted">Tavoite: väh. 3 lenkkiä / 120 min.</span>
         </div>
 
         <div class="progress-track" aria-label="Lenkkien eteneminen">
@@ -217,7 +217,7 @@ class="primary-button logout-button"
           </div>
 
           <div class="brain-card">
-            <h4>Pienet oivallukset, hyvä mieli 💚</h4>
+            <h4>Nenä töihin, aivot töihin! 🐾</h4>
             <p>Päivän tavoite on 5–15 minuuttia.</p>
 
             <div class="brainwork-timer section-spacer">
