@@ -118,11 +118,26 @@ class="primary-button logout-button"
       </article>
     </section>
 
-    <section class="panel weekly-calendar">
-      <div class="panel-header">
-        <h3>Viikkokalenteri</h3>
-        <span class="muted">Lenkit, ruoka ja aivojumppa</span>
-      </div>
+<section class="panel weekly-calendar">
+  <div class="panel-header calendar-header">
+    <h3>Viikkokalenteri</h3>
+
+    <div class="calendar-navigation">
+      <button type="button" id="previous-week" class="primary-button">
+        ← Edellinen
+      </button>
+
+      <button type="button" id="current-week" class="primary-button">
+        Tämä viikko
+      </button>
+
+      <button type="button" id="next-week" class="primary-button">
+        Seuraava →
+      </button>
+    </div>
+  </div>
+
+<p class="muted" id="calendar-week-label"></p>
 
       <div class="week-grid" id="week-calendar">
         <!-- Viikonpäivät lisätään JavaScriptillä. -->
@@ -293,6 +308,7 @@ dateElement.textContent = new Intl.DateTimeFormat("fi-FI", {
   month: "long",
 }).format(new Date());
 
+let selectedWeekOffset = 0;
 function renderWeekCalendar() {
   const brainworkEntries = getBrainworkEntries();
   const walks = getWalks();
@@ -305,7 +321,20 @@ function renderWeekCalendar() {
   const today = new Date();
   const weekday = (today.getDay() + 6) % 7;
   const monday = new Date(today);
-  monday.setDate(today.getDate() - weekday);
+  monday.setDate(today.getDate() - weekday + selectedWeekOffset * 7);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const dateFormat = { day: "numeric", month: "numeric" };
+
+  const weekLabel = document.querySelector("#calendar-week-label");
+
+  if (weekLabel) {
+    weekLabel.textContent =
+      `${monday.toLocaleDateString("fi-FI", dateFormat)}.–` +
+      `${sunday.toLocaleDateString("fi-FI", dateFormat)}`;
+  }
 
   const dayNames = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
 
@@ -429,6 +458,21 @@ function renderWeekCalendar() {
     calendar.append(day);
   }
 }
+
+document.querySelector("#previous-week").addEventListener("click", () => {
+  selectedWeekOffset--;
+  renderWeekCalendar();
+});
+
+document.querySelector("#current-week").addEventListener("click", () => {
+  selectedWeekOffset = 0;
+  renderWeekCalendar();
+});
+
+document.querySelector("#next-week").addEventListener("click", () => {
+  selectedWeekOffset++;
+  renderWeekCalendar();
+});
 
 let diaryInitialized = false;
 

@@ -578,16 +578,16 @@ textarea:focus-visible {
 .dog-avatar-label {
   display: block;
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   flex-shrink: 0;
   cursor: pointer;
 }
 
 #dog-avatar {
   display: block;
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   box-sizing: border-box;
   border-radius: 50%;
   object-fit: cover;
@@ -889,4 +889,35 @@ textarea:focus-visible {
 
 .walk-notes::after {
   content: "”";
+}
+.calendar-header {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#calendar-week-label {
+  margin-top: -4px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .calendar-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .calendar-navigation button {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
 }
