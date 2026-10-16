@@ -79,6 +79,86 @@ export function initWalks(updateCalendar) {
   const walkList = document.querySelector("#walk-list");
   const addWalkButton = document.querySelector("#add-walk");
 
+  const today = new Date().toLocaleDateString("sv-SE");
+
+  function shiftDate(dateString, days) {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + days);
+
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  const earliestDate = shiftDate(today, -5);
+  let selectedDate = today;
+
+  const dayNavigation = document.createElement("div");
+  dayNavigation.className = "walk-day-navigation section-spacer";
+  dayNavigation.innerHTML = `
+<button type="button" class="primary-button" id="previous-day">
+  ← Edellinen
+</button>
+
+<button type="button" class="primary-button" id="today-button">
+  Tänään
+</button>
+
+<button type="button" class="primary-button" id="next-day">
+  Seuraava →
+</button>
+
+    <label class="form-field">
+      <span>Valitse päivä</span>
+      <input
+        type="date"
+        id="selected-walk-date"
+        min="${earliestDate}"
+        max="${today}"
+        value="${selectedDate}"
+      >
+    </label>
+  `;
+
+  walkList.before(dayNavigation);
+
+  const selectedDateInput = dayNavigation.querySelector("#selected-walk-date");
+
+  function setSelectedDate(date) {
+    if (date < earliestDate || date > today) return;
+
+    selectedDate = date;
+    selectedDateInput.value = date;
+
+    document.querySelector("#previous-day").disabled =
+      selectedDate <= earliestDate;
+
+    document.querySelector("#next-day").disabled = selectedDate >= today;
+
+    renderWalks();
+  }
+
+  document.querySelector("#previous-day").addEventListener("click", () => {
+    setSelectedDate(shiftDate(selectedDate, -1));
+  });
+
+  document.querySelector("#next-day").addEventListener("click", () => {
+    setSelectedDate(shiftDate(selectedDate, 1));
+  });
+
+  document.querySelector("#today-button").addEventListener("click", () => {
+    setSelectedDate(today);
+  });
+
+  selectedDateInput.addEventListener("change", () => {
+    setSelectedDate(selectedDateInput.value);
+  });
+
+  setSelectedDate(today);
+
   const walkTimerDisplay = document.querySelector("#walk-timer");
   const startWalkTimerButton = document.querySelector("#start-walk-timer");
   const stopWalkTimerButton = document.querySelector("#stop-walk-timer");
@@ -256,12 +336,14 @@ export function initWalks(updateCalendar) {
   function renderWalks() {
     walkList.innerHTML = "";
 
-    if (walks.length === 0) {
+    const dayWalks = walks.filter((walk) => walk.date === selectedDate);
+
+    if (dayWalks.length === 0) {
       walkList.innerHTML =
-        '<p class="muted">Lenkkejä ei ole vielä kirjattu.</p>';
+        '<p class="muted">Tälle päivälle ei ole vielä kirjattu lenkkejä.</p>';
     }
 
-    walks.forEach((walk) => {
+    dayWalks.forEach((walk) => {
       const ballMinutes = walk.ballMinutes ?? (walk.ball ? walk.duration : 0);
       const fastMinutes = walk.fastMinutes ?? 0;
       const creditedMinutes = walk.duration + ballMinutes + fastMinutes;
@@ -322,7 +404,7 @@ export function initWalks(updateCalendar) {
       walkList.append(item);
     });
 
-    updateSummary(walks);
+    updateSummary(dayWalks);
   }
 
   addWalkButton.addEventListener("click", () => {
@@ -341,6 +423,18 @@ export function initWalks(updateCalendar) {
       <div class="panel-header">
         <h3>Lisää lenkki</h3>
       </div>
+
+<label class="form-field">
+  <span>Lenkin päivämäärä</span>
+  <input
+    name="date"
+    type="date"
+    min="${earliestDate}"
+    max="${today}"
+    value="${selectedDate}"
+    required
+  >
+</label>
 
 <label class="form-field">
   <span>Kuka käytti koiran?</span>
@@ -422,6 +516,17 @@ export function initWalks(updateCalendar) {
       endInput.value = `${endHours}:${endMinutes}`;
 
       updatePreview();
+    });
+
+    form.elements.date.addEventListener("change", () => {
+      const date = form.elements.date.value;
+
+      if (date < earliestDate || date > today) {
+        form.elements.date.value = selectedDate;
+        return;
+      }
+
+      setSelectedDate(date);
     });
 
     const walkerSelect = form.elements.walker;
@@ -520,10 +625,8 @@ export function initWalks(updateCalendar) {
         return;
       }
 
-      const today = new Date().toLocaleDateString("sv-SE");
-
       const walk = {
-        date: today,
+        date: form.elements.date.value,
         walker: form.elements.walker.value,
         start: startInput.value,
         end: endInput.value,
@@ -537,6 +640,8 @@ export function initWalks(updateCalendar) {
       const saved = await saveWalk(walk);
 
       if (!saved) return;
+
+      setSelectedDate(walk.date);
 
       form.remove();
 

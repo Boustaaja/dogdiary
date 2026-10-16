@@ -81,6 +81,13 @@ textarea:focus-visible {
   font-size: 24px;
 }
 
+.brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .brand-name {
   margin: 0;
   font-family: Manrope, sans-serif;
@@ -899,7 +906,7 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 #calendar-week-label {
@@ -912,12 +919,49 @@ textarea:focus-visible {
     width: 100%;
     justify-content: space-between;
     gap: 6px;
+    box-sizing: border-box;
   }
 
   .calendar-navigation button {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
-    padding: 8px 6px;
+    width: 0;
+    padding: 8px 2px;
     font-size: 0.8rem;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+}
+
+/* Päivän lenkkien navigointi */
+.walk-day-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .walk-day-navigation {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .walk-day-navigation button {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 2px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .walk-day-navigation .form-field {
+    grid-column: 1 / -1;
+    width: 100%;
+    box-sizing: border-box;
   }
 }

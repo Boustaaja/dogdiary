@@ -1,4 +1,4 @@
-import defaultDogAvatar from "./assets/Images/dog-breed-svgrepo-com.svg";
+import defaultDogAvatar from "./assets/Images/brand.png";
 import { supabase } from "./supabase.js";
 
 export function initDogProfile() {

@@ -12,7 +12,9 @@ const app = document.querySelector("#app");
 app.innerHTML = `
 <section id="login-view" class="login-view" hidden>
     <div class="login-card">
-      <div class="brand-icon" aria-hidden="true">🐾</div>
+<div class="brand-icon">
+  <img src="/brand.png" alt="" />
+</div>
       <h1>DogDiary</h1>
       <p>Kirjaudu sisään nähdäksesi yhteisen päiväkirjan.</p>
 
@@ -47,7 +49,9 @@ app.innerHTML = `
   <div id="diary-view" hidden>
   <header class="app-header">
     <div class="brand">
-      <div class="brand-icon" aria-hidden="true">🐾</div>
+<div class="brand-icon">
+  <img src="/brand.png" alt="" />
+</div>
       <div>
         <h1 class="brand-name">DogDiary</h1>
         <p class="brand-subtitle">Koiran hyvinvointipäiväkirja</p>
@@ -385,7 +389,7 @@ function renderWeekCalendar() {
       brainworkColor = "red";
     }
 
-    if (!isFuture && !isToday) {
+    if (!isFuture && !isToday && dayWalks.length > 0) {
       walkColor =
         dayWalks.length < 3 || creditedMinutes < 90
           ? "red"
@@ -477,26 +481,44 @@ document.querySelector("#next-week").addEventListener("click", () => {
 let diaryInitialized = false;
 
 const greetings = [
-  "Tervehdys, tassuvastaava! 🐶",
-  "Hei karvakaverin huoltaja! 🐾",
-  "Tervetuloa takaisin, karvakaverin hovipalvelija! 🦴",
-  "Päivää, koiran henkilökunta! 🐕",
-  "Moikka, tassutiimin ihmisjäsen! 🐾",
-  "Hei, karvakaverin hyvinvointipäällikkö! 🐶",
+  (name) => `Terve, ${name}! 🐶`,
+  (name) => `Terve taas, ${name}, valmiina lenkille? 🐾`,
+  (name) => `Moikka ${name}! Pidetään hauska päivä yhdessä. 💚`,
+  (name) => `Päivän tassutehtävät kutsuvat, ${name}! 🐾`,
+  (name) => `Hei ${name}, mukava nähdä taas! 🦴`,
+  (name) => `Moikka ${name}! Mitä kivaa tänään keksitään? 🐕`,
+  (name) => `Moi ${name}! Aika laittaa häntä heilumaan ja tassut töihin! 🐾`,
 ];
 
-const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+async function updateWelcomeGreeting() {
+  const { data, error } = await supabase.auth.getUser();
 
-const greetingElement = document.querySelector("#welcome-greeting");
+  if (error || !data.user) {
+    console.error("Kirjautuneen käyttäjän hakeminen epäonnistui:", error);
+    return;
+  }
 
-if (greetingElement) {
-  greetingElement.textContent = randomGreeting;
+  const email = data.user.email?.toLowerCase();
+  let name = "";
+
+  if (email === "boustaaja@hotmail.com") name = "Katja";
+  if (email === "godek_88@hotmail.com") name = "Antti";
+
+  if (!name) name = "tassuvastaava";
+
+  const randomGreeting =
+    greetings[Math.floor(Math.random() * greetings.length)];
+
+  document.querySelector("#welcome-greeting").textContent =
+    randomGreeting(name);
 }
 
 function initDiary() {
   if (diaryInitialized) return;
 
   diaryInitialized = true;
+  updateWelcomeGreeting();
+
   initDogProfile();
   initWalks(renderWeekCalendar);
   initBrainwork(renderWeekCalendar);
