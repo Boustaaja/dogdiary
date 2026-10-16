@@ -79,6 +79,7 @@ textarea:focus-visible {
   background: var(--green);
   color: white;
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .brand-icon img {
@@ -86,6 +87,7 @@ textarea:focus-visible {
   height: 100%;
   object-fit: contain;
   display: block;
+  border-radius: 10px;
 }
 
 .brand-name {
