@@ -297,3 +297,24 @@
 .achievement-status {
   line-height: 1;
 }
+/* Saavutuskuvien keskitys kaikissa näkymissä */
+.achievement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.achievement-icon .achievement-image {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+  transform: none;
+  object-fit: contain;
+  object-position: center;
+}
+
+.achievement-card-detailed .achievement-icon .achievement-image {
+  max-width: 100%;
+  max-height: 100%;
+}
