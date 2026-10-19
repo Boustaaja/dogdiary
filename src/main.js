@@ -6,6 +6,12 @@ import { initDogProfile } from "./dogProfile.js";
 import { initBrainwork, getBrainworkEntries } from "./brainwork.js";
 import { initWalks, getWalks } from "./walks.js";
 import { supabase } from "./supabase.js";
+import {
+  renderAchievementShowcase,
+  renderAllAchievements,
+} from "./achievements/achievements.js";
+import puppy from "./assets/Images/puppy.png";
+import { initDailyTasks } from "./dailyTasks.js";
 
 const app = document.querySelector("#app");
 
@@ -70,7 +76,7 @@ class="primary-button logout-button"
 </div>
   </header>
 
-  <main class="page">
+<main id="diary-main" class="page">
     <section class="welcome">
       <p class="eyebrow">Päivän kuulumiset</p>
       <h2 id="welcome-greeting"></h2>
@@ -98,7 +104,9 @@ class="primary-button logout-button"
 
     <section class="stats-grid" aria-label="Päivän yhteenveto">
       <article class="stat-card">
-        <div class="stat-icon" aria-hidden="true">🐕</div>
+<div class="stat-icon" aria-hidden="true">
+  <img src="${puppy}" alt="" />
+</div>
         <p class="stat-value" id="walk-count">0 / 3</p>
         <p class="stat-label">Lenkit tehty</p>
       </article>
@@ -119,7 +127,7 @@ class="primary-button logout-button"
         <div class="stat-icon" aria-hidden="true">💡</div>
         <p class="stat-value" id="brain-time">0 min</p>
         <p class="stat-label">Aivotyöskentely</p>
-      </article>
+      </article>  
     </section>
 
 <section class="panel weekly-calendar">
@@ -155,17 +163,19 @@ class="primary-button logout-button"
       </div>
 
 <div class="calendar-legend">
-  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 120 min päivässä</span>
+  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 90 min päivässä</span>
   <span>🦴 Ruoka – Tavoite: 3 täyttä annosta päivässä</span>
   <span>💡 Aivojumppa – Tavoite: 15 min päivässä</span>
 </div>
     </section>
+<section id="daily-task"></section>
+    <section id="achievements-showcase"></section>
 
     <div class="content-grid">
       <section class="panel">
         <div class="panel-header">
           <h3>Päivän lenkit</h3>
-          <span class="muted">Tavoite: väh. 3 lenkkiä / 120 min.</span>
+          <span class="muted">Tavoite: väh. 3 lenkkiä / 90 min.</span>
         </div>
 
         <div class="progress-track" aria-label="Lenkkien eteneminen">
@@ -245,6 +255,14 @@ class="primary-button logout-button"
               </div>
             </div>
 
+<label for="brainwork-date">Päivämäärä</label>
+<input
+  type="date"
+  id="brainwork-date"
+  name="date"
+  required
+>
+
             <form id="brainwork-form" class="section-spacer">
               <label for="brainwork-activity">Aktiviteetti</label>
               <input
@@ -301,6 +319,63 @@ class="primary-button logout-button"
       </div>
     </div>
   </main>
+
+<main id="all-achievements-view" class="page" hidden>
+  <section class="all-achievements-panel">
+    <div class="all-achievements-header">
+      <button
+        type="button"
+        id="back-to-diary"
+        class="all-achievements-back"
+      >
+        ← Takaisin
+      </button>
+
+      <h1>Kaikki palkinnot</h1>
+      <p>Seuraa yhteisiä ja henkilökohtaisia saavutuksia.</p>
+    </div>
+
+    <div
+      class="all-achievements-tabs"
+      role="tablist"
+      aria-label="Palkintojen ryhmä"
+    >
+      <button
+        type="button"
+        class="all-achievements-tab is-active"
+        data-achievement-tab="shared"
+        role="tab"
+        aria-selected="true"
+      >
+        Yhteiset
+      </button>
+
+      <button
+        type="button"
+        class="all-achievements-tab"
+        data-achievement-tab="katja"
+        role="tab"
+        aria-selected="false"
+      >
+        Katja
+      </button>
+
+      <button
+        type="button"
+        class="all-achievements-tab"
+        data-achievement-tab="antti"
+        role="tab"
+        aria-selected="false"
+      >
+        Antti
+      </button>
+
+    </div>
+
+    <div id="all-achievements-content"></div>
+  </section>
+</main>
+
 </div>
 `;
 
@@ -319,6 +394,12 @@ function renderWeekCalendar() {
 
   const calendar = document.querySelector("#week-calendar");
   if (!calendar) return;
+
+  renderAchievementShowcase(walks, brainworkEntries);
+
+  if (!document.querySelector("#all-achievements-view").hidden) {
+    renderAllAchievementsPage();
+  }
 
   calendar.innerHTML = "";
 
@@ -391,9 +472,9 @@ function renderWeekCalendar() {
 
     if (!isFuture && !isToday && dayWalks.length > 0) {
       walkColor =
-        dayWalks.length < 3 || creditedMinutes < 90
+        dayWalks.length < 3 || creditedMinutes < 60
           ? "red"
-          : creditedMinutes < 120
+          : creditedMinutes < 90
             ? "yellow"
             : "green";
 
@@ -407,9 +488,9 @@ function renderWeekCalendar() {
               : "neutral";
     } else if (isToday) {
       walkColor =
-        dayWalks.length >= 3 && creditedMinutes >= 120
+        dayWalks.length >= 3 && creditedMinutes >= 90
           ? "green"
-          : dayWalks.length >= 3 && creditedMinutes >= 90
+          : dayWalks.length >= 3 && creditedMinutes >= 60
             ? "yellow"
             : dayWalks.length > 0
               ? "red"
@@ -462,6 +543,46 @@ function renderWeekCalendar() {
     calendar.append(day);
   }
 }
+
+let activeAchievementTab = "shared";
+
+function renderAllAchievementsPage() {
+  renderAllAchievements(
+    getWalks(),
+    getBrainworkEntries(),
+    activeAchievementTab,
+  );
+}
+
+// Avaa kaikki palkinnot
+document
+  .querySelector("#achievements-showcase")
+  .addEventListener("click", (event) => {
+    if (!event.target.closest("#show-all-achievements")) return;
+
+    document.querySelector("#diary-main").hidden = true;
+    document.querySelector("#all-achievements-view").hidden = false;
+
+    activeAchievementTab = "shared";
+    renderAllAchievementsPage();
+  });
+
+// Vaihda palkintojen välilehteä
+document
+  .querySelector("#all-achievements-view")
+  .addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-achievement-tab]");
+    if (!tab) return;
+
+    activeAchievementTab = tab.dataset.achievementTab;
+    renderAllAchievementsPage();
+  });
+
+// Palaa päiväkirjaan
+document.querySelector("#back-to-diary").addEventListener("click", () => {
+  document.querySelector("#all-achievements-view").hidden = true;
+  document.querySelector("#diary-main").hidden = false;
+});
 
 document.querySelector("#previous-week").addEventListener("click", () => {
   selectedWeekOffset--;
@@ -522,7 +643,9 @@ function initDiary() {
   initDogProfile();
   initWalks(renderWeekCalendar);
   initBrainwork(renderWeekCalendar);
+
   renderWeekCalendar();
+  initDailyTasks();
 }
 
 const loginView = document.querySelector("#login-view");

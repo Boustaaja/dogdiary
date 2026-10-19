@@ -74,6 +74,14 @@ export function initBrainwork(updateCalendar) {
   );
   const brainworkMinutesInput = document.querySelector("#brainwork-minutes");
 
+  const brainworkDateInput = document.querySelector("#brainwork-date");
+
+  function getTodayDate() {
+    return new Date().toLocaleDateString("sv-SE");
+  }
+
+  brainworkDateInput.value = getTodayDate();
+
   const brainworkDurationButtons = document.querySelectorAll(
     ".brainwork-duration-button",
   );
@@ -83,24 +91,37 @@ export function initBrainwork(updateCalendar) {
   let brainworkElapsedMs = 0;
 
   function renderBrainwork() {
-    const today = new Date().toLocaleDateString("sv-SE");
+    const selectedDate =
+      brainworkDateInput.value || new Date().toLocaleDateString("sv-SE");
 
+    const selectedEntries = brainworkEntries.filter(
+      (entry) => entry.date === selectedDate,
+    );
+
+    const selectedMinutes = selectedEntries.reduce(
+      (total, entry) => total + Number(entry.minutes),
+      0,
+    );
+
+    brainworkSummary.textContent = `${selectedMinutes} min`;
+
+    // Päivän yhteenveto näyttää edelleen tämän päivän kokonaismäärän.
+    const today = new Date().toLocaleDateString("sv-SE");
     const todayMinutes = brainworkEntries
       .filter((entry) => entry.date === today)
-      .reduce((total, entry) => total + entry.minutes, 0);
+      .reduce((total, entry) => total + Number(entry.minutes), 0);
 
-    brainworkSummary.textContent = `${todayMinutes} min`;
     brainTime.textContent = `${todayMinutes} min`;
 
     brainworkList.innerHTML = "";
 
-    if (brainworkEntries.length === 0) {
+    if (selectedEntries.length === 0) {
       brainworkList.innerHTML =
-        '<p class="muted">Aivojumppia ei ole vielä kirjattu.</p>';
+        '<p class="muted">Tälle päivälle ei ole vielä kirjattu aivojumppia.</p>';
       return;
     }
 
-    const sortedEntries = [...brainworkEntries].sort((a, b) =>
+    const sortedEntries = [...selectedEntries].sort((a, b) =>
       b.date.localeCompare(a.date),
     );
 
@@ -125,7 +146,7 @@ export function initBrainwork(updateCalendar) {
       deleteButton.textContent = "Poista";
       deleteButton.setAttribute(
         "aria-label",
-        `Poista älytoimintakirjaus ${entry.activity}`,
+        `Poista aivojumppakirjaus ${entry.activity}`,
       );
 
       deleteButton.addEventListener("click", async () => {
@@ -136,6 +157,11 @@ export function initBrainwork(updateCalendar) {
       brainworkList.append(item);
     });
   }
+
+  brainworkDateInput.addEventListener("change", () => {
+    renderBrainwork();
+    updateCalendar?.();
+  });
 
   async function deleteBrainwork(entry) {
     const confirmed = confirm(
@@ -281,7 +307,7 @@ export function initBrainwork(updateCalendar) {
       return;
     }
 
-    const date = new Date().toLocaleDateString("sv-SE");
+    const date = brainworkDateInput.value;
     const minutes = Number(brainworkMinutesInput.value);
     const activity = document.querySelector("#brainwork-activity").value.trim();
 
@@ -312,6 +338,7 @@ export function initBrainwork(updateCalendar) {
 
     brainworkForm.reset();
     brainworkMinutesInput.value = "";
+    brainworkDateInput.value = getTodayDate();
 
     brainworkDurationButtons.forEach((button) => {
       button.classList.remove("is-selected");

@@ -1,0 +1,265 @@
+/* Kaikki palkinnot -sivu */
+
+.all-achievements-panel {
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--white);
+}
+
+.all-achievements-header {
+  margin-bottom: 28px;
+}
+
+.all-achievements-back {
+  margin-bottom: 20px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.all-achievements-back:hover {
+  background: #f4f5f2;
+}
+
+.all-achievements-header h1 {
+  margin: 0 0 8px;
+  font-family: Manrope, sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.7px;
+}
+
+.all-achievements-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Välilehdet */
+
+.all-achievements-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.all-achievements-tab {
+  padding: 11px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f4f5f2;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.all-achievements-tab:hover {
+  border-color: #e99532;
+}
+
+.all-achievements-tab.is-active {
+  border-color: #e99532;
+  background: #fff0d8;
+  color: #8b572a;
+}
+
+/* Valitun välilehden otsikko */
+
+.all-achievements-group-title {
+  margin: 0 0 6px;
+  font-family: Manrope, sans-serif;
+  font-size: 20px;
+}
+
+.all-achievements-group-description {
+  margin: 0 0 22px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Kuusi palkintoa rinnakkain isoilla näytöillä */
+
+.all-achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Yksityiskohtainen palkintokortti */
+
+.achievement-card-detailed {
+  height: auto;
+  min-height: 310px;
+  min-width: 0;
+  padding: 16px 12px;
+  gap: 10px;
+  justify-content: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.achievement-card-detailed .achievement-icon {
+  height: 110px;
+  min-height: 110px;
+}
+
+.achievement-card-detailed .achievement-image {
+  width: 110px;
+  height: 110px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.achievement-card-detailed .achievement-name {
+  width: 100%;
+  min-height: 30px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.achievement-description {
+  width: 100%;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Edistymispalkki */
+
+.achievement-card-detailed .achievement-progress {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.achievement-card-detailed .achievement-progress-label {
+  font-size: 11px;
+}
+
+.achievement-card-detailed .achievement-progress-track {
+  height: 8px;
+}
+
+.achievement-card-detailed .achievement-progress-fill {
+  background: #d98a3b;
+}
+
+/* Lukitut palkinnot */
+
+.achievement-card-detailed.is-locked .achievement-description {
+  color: #77796f;
+}
+
+.achievement-card-detailed.is-locked .achievement-progress-fill {
+  background: #a8a69c;
+}
+
+/* Keskikokoiset näytöt */
+
+@media (max-width: 1200px) {
+  .all-achievements-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .all-achievements-panel {
+    padding: 20px;
+  }
+
+  .all-achievements-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .achievement-card-detailed {
+    padding: 12px 8px;
+    min-height: 290px;
+  }
+
+  .achievement-card-detailed .achievement-icon {
+    height: 85px;
+    min-height: 85px;
+  }
+
+  .achievement-card-detailed .achievement-image {
+    width: 85px;
+    height: 85px;
+  }
+}
+
+/* Puhelimet */
+
+@media (max-width: 480px) {
+  .all-achievements-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .all-achievements-header h1 {
+    font-size: 23px;
+  }
+
+  .all-achievements-tabs {
+    gap: 6px;
+  }
+
+  .all-achievements-tab {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .all-achievements-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .achievement-card-detailed {
+    min-height: 275px;
+    padding: 12px 8px;
+  }
+
+  .achievement-card-detailed .achievement-name {
+    font-size: 12px;
+  }
+
+  .achievement-description {
+    font-size: 11px;
+  }
+
+  .achievement-card-detailed .achievement-progress-label {
+    gap: 3px;
+    font-size: 10px;
+  }
+}
+.all-achievements-back {
+  background-color: #e99532;
+  border: 2px solid #e99532;
+  color: #fff;
+  border-radius: 10px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.all-achievements-back:hover {
+  background-color: #d98220;
+  border-color: #d98220;
+  color: #fff;
+}
