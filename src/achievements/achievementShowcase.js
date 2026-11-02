@@ -143,7 +143,7 @@ function renderBadge(
 
   const iconContent = unlocked
     ? iconIsImage
-      ? `<img src="${badge.icon}" alt="" class="achievement-image">`
+      ? `<img src="${badge.icon}" alt="" class="achievement-image" data-badge-id="${badge.id}">`
       : badge.icon
     : lockIcon;
 
@@ -270,7 +270,7 @@ function renderPersonalShowcaseSlots(
       }
 
       const icon = badge
-        ? `<img class="achievement-image" src="${badge.icon}" alt="">`
+        ? `<img class="achievement-image" data-badge-id="${badge.id}" src="${badge.icon}" alt="">`
         : lockIcon;
 
       const name = badge?.name ?? "Lukittu palkinto";

@@ -183,13 +183,13 @@
   }
 
   .achievement-card-detailed .achievement-icon {
-    height: 85px;
-    min-height: 85px;
+    height: 78px;
+    min-height: 78px;
   }
 
   .achievement-card-detailed .achievement-image {
-    width: 85px;
-    height: 85px;
+    width: 76px;
+    height: 76px;
   }
 }
 

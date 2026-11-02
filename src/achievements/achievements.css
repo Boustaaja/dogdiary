@@ -190,7 +190,7 @@
   }
 
   .achievement-icon {
-    height: 85px;
+    height: 78px;
   }
 
   .achievement-lock-icon {
@@ -199,9 +199,8 @@
   }
 
   .achievement-image {
-    max-width: 85px;
-    max-height: 85px;
-    transform: translateX(4px);
+    max-width: 76px;
+    max-height: 76px;
   }
 
   .achievement-name {
@@ -268,6 +267,13 @@
   transform: none;
   object-fit: contain;
   object-position: center;
+}
+
+.achievement-icon .achievement-image[data-badge-id="long-walk"],
+.achievement-icon .achievement-image[data-badge-id="three-long-walks"],
+.achievement-icon .achievement-image[data-badge-id="five-long-walks"],
+.achievement-icon .achievement-image[data-badge-id="ten-long-walks"] {
+  transform: translateX(2px) scale(1.07);
 }
 
 .achievement-card-detailed .achievement-icon .achievement-image {
