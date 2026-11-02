@@ -19,6 +19,11 @@ import {
 // Reuse the project's lock artwork anywhere an achievement is still locked.
 const lockIcon = `<img src="${lockImage}" alt="" aria-hidden="true" class="achievement-lock-icon">`;
 
+// Return the correct Finnish genitive form for the walker's name.
+function getWalkerGenitiveName(walker) {
+  return walker === "Antti" ? "Antin" : "Katjan";
+}
+
 // Normalize saved choices to exactly six slots for rendering and picker operations.
 function getAchievementShowcaseSlots(savedBadgeIds) {
   const slots = Array.isArray(savedBadgeIds) ? savedBadgeIds.slice(0, 6) : [];
@@ -30,7 +35,7 @@ function getAchievementShowcaseSlots(savedBadgeIds) {
   return slots;
 }
 
-// Build the modal for choosing unlocked badges and prevent duplicates across slots.
+// Build the modal with every unlocked badge selectable; existing selections swap slots.
 function openAchievementPicker(
   walker,
   slotIndex,
@@ -39,10 +44,6 @@ function openAchievementPicker(
   onSelect,
 ) {
   document.querySelector(".achievement-picker-backdrop")?.remove();
-
-  const usedBadgeIds = new Set(
-    slots.map((id, index) => (index === slotIndex ? "" : id)).filter(Boolean),
-  );
 
   const backdrop = document.createElement("div");
   backdrop.className = "achievement-picker-backdrop";
@@ -56,7 +57,7 @@ function openAchievementPicker(
     >
       <div class="achievement-picker-header">
         <h3 class="achievement-picker-title" id="achievement-picker-title">
-          Valitse ${walker}n palkinto
+          Valitse ${getWalkerGenitiveName(walker)} palkinto
         </h3>
         <button
           type="button"
@@ -70,14 +71,12 @@ function openAchievementPicker(
 
   const grid = backdrop.querySelector(".achievement-picker-grid");
 
-  // Add each unlocked badge as a selectable option; already-used badges are disabled.
+  // Keep badges selectable even if they are already displayed in another showcase slot.
   unlockedBadges.forEach((badge) => {
-    const alreadyUsed = usedBadgeIds.has(badge.id);
     const option = document.createElement("button");
 
     option.type = "button";
     option.className = "achievement-picker-option";
-    option.disabled = alreadyUsed;
 
     const image = document.createElement("img");
     image.src = badge.icon;
@@ -296,7 +295,7 @@ function renderPersonalShowcaseSlots(
             class="achievement-slot-trigger"
             data-walker="${walker}"
             data-slot-index="${slotIndex}"
-            aria-label="Vaihda ${walker}n palkinto: ${name}"
+            aria-label="Vaihda ${getWalkerGenitiveName(walker)} palkinto: ${name}"
             ${canEdit && badge ? "" : "disabled"}
           >
             <div class="achievement-icon">
