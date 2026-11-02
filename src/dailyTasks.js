@@ -1,23 +1,15 @@
 import { supabase } from "./supabase.js";
 import forestBadge from "./assets/badges/forest.svg";
+import lockImage from "./assets/Images/Lock.svg";
+
+// Daily task card: keeps one random task per day, stored per user and rendered in the diary UI.
+// This module is intentionally focused on a single, stable responsibility: today's task + completion state.
 import dogDayBadge from "./assets/badges/dogDay.svg";
 import dogParkBadge from "./assets/badges/dogPark.svg";
+import campingBadge from "./assets/badges/camping.svg";
+import waterBadge from "./assets/badges/water.svg";
+import fieldBadge from "./assets/badges/field.svg";
 import "./dailyTasks.css";
-
-const lockIcon = `
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <rect x="4" y="10" width="16" height="11" rx="2"></rect>
-    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
-  </svg>
-`;
 
 const dailyTaskOptions = [
   {
@@ -38,12 +30,41 @@ const dailyTaskOptions = [
     description: "Käykää koirapuistossa.",
     icon: dogParkBadge,
   },
+  {
+    id: "camping",
+    name: "Retkellä",
+    description: "Tehkää retki eväiden kanssa.",
+    icon: campingBadge,
+  },
+  {
+    id: "water",
+    name: "Veden äärellä",
+    description: "Tehkää lenkki veden äärellä.",
+    icon: waterBadge,
+  },
+  {
+    id: "field",
+    name: "Avara lenkki",
+    description: "Tehkää lenkki avaralla niityllä tai pellolla.",
+    icon: fieldBadge,
+  },
 ];
 
 let dailyTask = null;
 let diaryId = null;
 let currentWalker = null;
 
+// The completion state is stored per walker, so status is mapped to the right database column.
+function getTaskCompletionColumn(walker) {
+  return walker === "Katja" ? "katja_completed" : "antti_completed";
+}
+
+// Convert the stored boolean into the status text shown for each walker.
+function getTaskCompletionStatus(isCompleted) {
+  return isCompleted ? "Suoritettu" : "Ei vielä suoritettu";
+}
+
+// Return today's local date as YYYY-MM-DD for the daily-task database query.
 function getToday() {
   const now = new Date();
   const year = now.getFullYear();
@@ -53,6 +74,7 @@ function getToday() {
   return `${year}-${month}-${day}`;
 }
 
+// Diary id is needed for all queries so the task belongs to the correct shared dog diary.
 async function getDiaryId() {
   const { data, error } = await supabase
     .from("diary_members")
@@ -66,6 +88,7 @@ async function getDiaryId() {
   return data.diary_id;
 }
 
+// Resolve the logged-in account to the matching walker name used by task fields.
 async function getCurrentWalker() {
   const { data, error } = await supabase.auth.getUser();
 
@@ -81,10 +104,11 @@ async function getCurrentWalker() {
   throw new Error("Käyttäjälle ei löytynyt nimeä.");
 }
 
+// Fetch or create the daily task once per date so both users get the same challenge for that day.
 async function getOrCreateDailyTask() {
   const taskDate = getToday();
 
-  // Tarkista ensin, onko tämän päivän tehtävä jo tallennettu.
+  // Check whether the task already exists before creating another random task.
   const { data: existingTask, error: fetchError } = await supabase
     .from("daily_tasks")
     .select("*")
@@ -126,6 +150,7 @@ async function getOrCreateDailyTask() {
   throw insertError;
 }
 
+// Render the current daily task and show each user's completion state in a compact card.
 function renderDailyTask() {
   const container = document.querySelector("#daily-task");
   if (!container || !dailyTask) return;
@@ -144,13 +169,8 @@ function renderDailyTask() {
       ? dailyTask.katja_completed
       : dailyTask.antti_completed;
 
-  const katjaStatus = dailyTask.katja_completed
-    ? "Suoritettu"
-    : "Ei vielä suoritettu";
-
-  const anttiStatus = dailyTask.antti_completed
-    ? "Suoritettu"
-    : "Ei vielä suoritettu";
+  const katjaStatus = getTaskCompletionStatus(dailyTask.katja_completed);
+  const anttiStatus = getTaskCompletionStatus(dailyTask.antti_completed);
 
   container.innerHTML = `
     <div class="daily-task-card">
@@ -162,7 +182,7 @@ ${
         alt="${taskInfo.name}"
       />`
     : `<div class="daily-task-badge locked">
-    ${lockIcon}
+    <img src="${lockImage}" alt="" aria-hidden="true">
   </div>`
 }
 
@@ -176,7 +196,7 @@ ${
           type="button"
           ${completed ? "disabled" : ""}
         >
-          ${completed ? "Tehtävä suoritettu ✓" : "Merkitse suoritetuksi"}
+          ${completed ? "Tehtävä suoritettu" : "Merkitse suoritetuksi"}
         </button>
 
         <div class="daily-task-status">
@@ -192,11 +212,11 @@ ${
     ?.addEventListener("click", completeDailyTask);
 }
 
+// Mark today's task complete for the signed-in walker and render the updated shared state.
 async function completeDailyTask() {
   if (!dailyTask || !currentWalker) return;
 
-  const column =
-    currentWalker === "Katja" ? "katja_completed" : "antti_completed";
+  const column = getTaskCompletionColumn(currentWalker);
 
   const { data, error } = await supabase
     .from("daily_tasks")
@@ -215,6 +235,7 @@ async function completeDailyTask() {
   renderDailyTask();
 }
 
+// Load the diary, identify the current walker, and display today's shared task.
 export async function initDailyTasks() {
   const container = document.querySelector("#daily-task");
   if (!container) return;

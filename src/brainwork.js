@@ -1,9 +1,25 @@
 import { supabase } from "./supabase.js";
 
+// Brainwork module: handles the brainwork log, timer flow and selected-day rendering.
+// The module keeps the data fetch/update logic close to the UI so the daily tracking
+// remains easy to understand and adjust without digging through the whole app shell.
 let brainworkEntries = [];
 let diaryId = null;
 let brainworkChannel = null;
 
+// Shared date helpers keep the timer summary and calendar data consistent.
+function getDateString(date = new Date()) {
+  return date.toLocaleDateString("sv-SE");
+}
+
+// Totals follow the same day key represented in the database, so the UI and records match.
+function getTotalMinutesForDate(entries, dateKey) {
+  return entries
+    .filter((entry) => entry.date === dateKey)
+    .reduce((total, entry) => total + Number(entry.minutes), 0);
+}
+
+// Load the diary's brainwork entries and keep them in memory for the selected-day view.
 async function loadBrainwork() {
   const { data, error } = await supabase
     .from("diary_members")
@@ -38,6 +54,7 @@ async function loadBrainwork() {
   return true;
 }
 
+// New entries are inserted with the current diary id to keep data scoped to the shared dog diary.
 async function saveBrainwork(entry) {
   if (!diaryId) {
     alert("Päiväkirjaa ei ole vielä ladattu. Yritä hetken kuluttua uudelleen.");
@@ -60,7 +77,9 @@ async function saveBrainwork(entry) {
   return true;
 }
 
+// Connect the brainwork form, timer and entry list to the shared diary.
 export function initBrainwork(updateCalendar) {
+  // UI wiring: all DOM elements that power the brainwork form, list and timer.
   const brainworkList = document.querySelector("#brainwork-list");
   const brainworkForm = document.querySelector("#brainwork-form");
   const brainworkSummary = document.querySelector("#brainwork-summary");
@@ -76,11 +95,7 @@ export function initBrainwork(updateCalendar) {
 
   const brainworkDateInput = document.querySelector("#brainwork-date");
 
-  function getTodayDate() {
-    return new Date().toLocaleDateString("sv-SE");
-  }
-
-  brainworkDateInput.value = getTodayDate();
+  brainworkDateInput.value = getDateString();
 
   const brainworkDurationButtons = document.querySelectorAll(
     ".brainwork-duration-button",
@@ -90,26 +105,18 @@ export function initBrainwork(updateCalendar) {
   let brainworkTimerInterval = null;
   let brainworkElapsedMs = 0;
 
+  // Render the selected day: totals, list of entries and current summary values.
   function renderBrainwork() {
-    const selectedDate =
-      brainworkDateInput.value || new Date().toLocaleDateString("sv-SE");
-
+    const selectedDate = brainworkDateInput.value || getDateString();
     const selectedEntries = brainworkEntries.filter(
       (entry) => entry.date === selectedDate,
     );
-
-    const selectedMinutes = selectedEntries.reduce(
-      (total, entry) => total + Number(entry.minutes),
-      0,
-    );
+    const selectedMinutes = getTotalMinutesForDate(brainworkEntries, selectedDate);
 
     brainworkSummary.textContent = `${selectedMinutes} min`;
 
-    // Päivän yhteenveto näyttää edelleen tämän päivän kokonaismäärän.
-    const today = new Date().toLocaleDateString("sv-SE");
-    const todayMinutes = brainworkEntries
-      .filter((entry) => entry.date === today)
-      .reduce((total, entry) => total + Number(entry.minutes), 0);
+    const today = getDateString();
+    const todayMinutes = getTotalMinutesForDate(brainworkEntries, today);
 
     brainTime.textContent = `${todayMinutes} min`;
 
@@ -149,6 +156,7 @@ export function initBrainwork(updateCalendar) {
         `Poista aivojumppakirjaus ${entry.activity}`,
       );
 
+      // Delete the entry associated with this rendered row.
       deleteButton.addEventListener("click", async () => {
         await deleteBrainwork(entry);
       });
@@ -158,11 +166,13 @@ export function initBrainwork(updateCalendar) {
     });
   }
 
+  // Changing the selected date refreshes both the list and the calendar.
   brainworkDateInput.addEventListener("change", () => {
     renderBrainwork();
     updateCalendar?.();
   });
 
+  // Confirm and delete an entry, then reload the list and any date-dependent views.
   async function deleteBrainwork(entry) {
     const confirmed = confirm(
       `Haluatko varmasti poistaa älytoimintakirjauksen "${entry.activity}" (${entry.date})?`,
@@ -193,6 +203,7 @@ export function initBrainwork(updateCalendar) {
     }
   }
 
+  // Keep the list synced if anyone else changes the same diary record in real time.
   function subscribeToBrainwork() {
     if (brainworkChannel || !diaryId) {
       return;
@@ -207,6 +218,7 @@ export function initBrainwork(updateCalendar) {
           schema: "public",
           table: "brainwork",
         },
+        // Reload shared entries after another client updates the diary.
         async () => {
           const loaded = await loadBrainwork();
 
@@ -222,6 +234,7 @@ export function initBrainwork(updateCalendar) {
       .subscribe();
   }
 
+  // Render the timer from elapsed time so repeated intervals do not accumulate timing drift.
   function updateBrainworkTimer() {
     const currentSessionMs =
       brainworkStartTime !== null ? Date.now() - brainworkStartTime : 0;
@@ -236,17 +249,25 @@ export function initBrainwork(updateCalendar) {
     brainworkTimerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
+  // Set a preset duration and keep the matching quick-select button highlighted.
   function selectBrainworkDuration(minutes) {
     brainworkMinutesInput.value = minutes;
 
+    // Quick-select buttons set the same duration field that the timer can fill.
     brainworkDurationButtons.forEach((button) => {
-      button.classList.toggle(
-        "is-selected",
-        Number(button.dataset.minutes) === minutes,
-      );
+      const selected = Number(button.dataset.minutes) === minutes;
+      button.classList.toggle("is-selected", selected);
     });
   }
 
+  // Clear the quick-select highlight when the user starts a custom timed session.
+  function clearDurationSelection() {
+    brainworkDurationButtons.forEach((button) => {
+      button.classList.remove("is-selected");
+    });
+  }
+
+  // Timer controls capture a custom session duration for the activity form.
   brainworkStartButton.addEventListener("click", () => {
     if (brainworkStartTime !== null) return;
 
@@ -256,9 +277,7 @@ export function initBrainwork(updateCalendar) {
     brainworkStopButton.disabled = false;
     brainworkStartButton.classList.add("is-selected");
 
-    brainworkDurationButtons.forEach((button) => {
-      button.classList.remove("is-selected");
-    });
+    clearDurationSelection();
 
     brainworkTimerStatus.textContent = "Harjoitus käynnissä";
 
@@ -291,14 +310,11 @@ export function initBrainwork(updateCalendar) {
 
   brainworkDurationButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      brainworkMinutesInput.value = button.dataset.minutes;
-
-      brainworkDurationButtons.forEach((item) => {
-        item.classList.toggle("is-selected", item === button);
-      });
+      selectBrainworkDuration(Number(button.dataset.minutes));
     });
   });
 
+  // Validate and save the selected activity, then reset form and timer state.
   brainworkForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -338,11 +354,9 @@ export function initBrainwork(updateCalendar) {
 
     brainworkForm.reset();
     brainworkMinutesInput.value = "";
-    brainworkDateInput.value = getTodayDate();
+    brainworkDateInput.value = getDateString();
 
-    brainworkDurationButtons.forEach((button) => {
-      button.classList.remove("is-selected");
-    });
+    clearDurationSelection();
 
     brainworkElapsedMs = 0;
     brainworkStartTime = null;
@@ -353,6 +367,7 @@ export function initBrainwork(updateCalendar) {
 
   renderBrainwork();
 
+  // Populate the first view after data loads, then start listening for shared updates.
   loadBrainwork().then((loaded) => {
     if (!loaded) return;
 
@@ -366,6 +381,7 @@ export function initBrainwork(updateCalendar) {
   });
 }
 
+// Expose the in-memory entries so the calendar and achievements can calculate progress.
 export function getBrainworkEntries() {
   return brainworkEntries;
 }

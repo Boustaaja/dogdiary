@@ -1,3 +1,4 @@
+// Renders the dashboard summary cards for walks, meals and progress.
 export function updateSummary(walks) {
   const today = new Date().toLocaleDateString("sv-SE");
   const todayWalks = walks.filter((walk) => walk.date === today);
@@ -55,17 +56,13 @@ export function updateSummary(walks) {
     const row = document.createElement("div");
     row.className = "meal-row";
 
-    const icon = document.createElement("span");
-    icon.className = "meal-check";
-    icon.textContent = "✓";
-
     const label = document.createElement("span");
     const portionLabel =
       walk.portion === "full" ? "Täysi annos · 1 p" : "Puolikas annos · 0,5 p";
 
     label.textContent = `${walk.start} · ${portionLabel} · ${walk.walker}`;
 
-    row.append(icon, label);
+    row.append(label);
     mealList.append(row);
   });
 }

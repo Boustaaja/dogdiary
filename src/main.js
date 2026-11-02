@@ -1,17 +1,22 @@
 import "./style.css";
-import lightningIcon from "./assets/Images/lightning-svgrepo-com.svg";
-import boneIcon from "./assets/Images/bone-svgrepo-com.svg";
-import lightbulbIcon from "./assets/Images/light-bulb-svgrepo-com.svg";
+
+// Main app shell: prepares the global layout, login flow and feature bootstrapping.
+// This file is intentionally the composition layer; it wires together the diary view,
+// calendar, and feature modules without owning the business logic itself.
 import { initDogProfile } from "./dogProfile.js";
 import { initBrainwork, getBrainworkEntries } from "./brainwork.js";
 import { initWalks, getWalks } from "./walks.js";
 import { supabase } from "./supabase.js";
+import { renderWeeklyCalendar } from "./calendar.js";
 import {
   renderAchievementShowcase,
   renderAllAchievements,
 } from "./achievements/achievements.js";
 import puppy from "./assets/Images/puppy.png";
 import { initDailyTasks } from "./dailyTasks.js";
+import clockIcon from "./assets/Images/clock.svg";
+import foodIcon from "./assets/Images/food.svg";
+import lightbulbIcon from "./assets/Images/lightbulb.svg";
 
 const app = document.querySelector("#app");
 
@@ -112,19 +117,25 @@ class="primary-button logout-button"
       </article>
 
       <article class="stat-card">
-        <div class="stat-icon" aria-hidden="true">🕒</div>
+        <div class="stat-icon" aria-hidden="true">
+          <img src="${clockIcon}" alt="" />
+        </div>
         <p class="stat-value" id="walk-time">0 min</p>
         <p class="stat-label">Ulkoilua yhteensä</p>
       </article>
 
       <article class="stat-card">
-        <div class="stat-icon" aria-hidden="true">🍽️</div>
+        <div class="stat-icon" aria-hidden="true">
+          <img src="${foodIcon}" alt="" />
+        </div>
         <p class="stat-value" id="meal-count">0 / 3</p>
         <p class="stat-label">Ruokailut hoidettu</p>
       </article>
 
       <article class="stat-card">
-        <div class="stat-icon" aria-hidden="true">💡</div>
+        <div class="stat-icon" aria-hidden="true">
+          <img src="${lightbulbIcon}" alt="" />
+        </div>
         <p class="stat-value" id="brain-time">0 min</p>
         <p class="stat-label">Aivotyöskentely</p>
       </article>  
@@ -163,9 +174,9 @@ class="primary-button logout-button"
       </div>
 
 <div class="calendar-legend">
-  <span>⚡ Lenkit – Tavoite: väh. 3 lenkkiä ja 90 min päivässä</span>
-  <span>🦴 Ruoka – Tavoite: 3 täyttä annosta päivässä</span>
-  <span>💡 Aivojumppa – Tavoite: 15 min päivässä</span>
+  <span>Lenkit – Tavoite: väh. 3 lenkkiä ja 90 min päivässä</span>
+  <span>Ruoka – Tavoite: 3 täyttä annosta päivässä</span>
+  <span>Aivojumppa – Tavoite: 15 min päivässä</span>
 </div>
     </section>
 <section id="daily-task"></section>
@@ -183,7 +194,7 @@ class="primary-button logout-button"
         </div>
 
         <div class="walk-timer section-spacer">
-  <p class="muted">Lenkin ajastin</p>
+        <p class="muted">Lenkin ajastin</p>
   <p id="walk-timer" class="walk-timer-display">00:00:00</p>
 
   <div class="form-actions">
@@ -231,7 +242,7 @@ class="primary-button logout-button"
           </div>
 
           <div class="brain-card">
-            <h4>Nenä töihin, aivot töihin! 🐾</h4>
+            <h4>Nenä töihin, aivot töihin!</h4>
             <p>Päivän tavoite on 5–15 minuuttia.</p>
 
             <div class="brainwork-timer section-spacer">
@@ -240,9 +251,13 @@ class="primary-button logout-button"
                 Ajastin ei ole käynnissä
               </p>
 
+              <div class="brainwork-card-icon" aria-hidden="true">
+                <img src="${lightbulbIcon}" alt="" />
+              </div>
+
               <div class="brainwork-timer-buttons">
                 <button type="button" class="primary-button" id="brainwork-start">
-                  ▶ Käynnistä
+                  Käynnistä
                 </button>
                 <button
                   type="button"
@@ -387,165 +402,38 @@ dateElement.textContent = new Intl.DateTimeFormat("fi-FI", {
   month: "long",
 }).format(new Date());
 
+// --- Weekly calendar coordination ---
 let selectedWeekOffset = 0;
+
+// The app shell refreshes dependent achievement views; calendar.js only calculates and draws the week.
 function renderWeekCalendar() {
-  const brainworkEntries = getBrainworkEntries();
+  if (!document.querySelector("#week-calendar")) return;
+
   const walks = getWalks();
+  const brainworkEntries = getBrainworkEntries();
 
-  const calendar = document.querySelector("#week-calendar");
-  if (!calendar) return;
-
+  renderWeeklyCalendar(walks, brainworkEntries, selectedWeekOffset);
   renderAchievementShowcase(walks, brainworkEntries);
 
+  // Keep the all-achievements view current while it is open and diary data changes.
   if (!document.querySelector("#all-achievements-view").hidden) {
     renderAllAchievementsPage();
   }
-
-  calendar.innerHTML = "";
-
-  const today = new Date();
-  const weekday = (today.getDay() + 6) % 7;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - weekday + selectedWeekOffset * 7);
-
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const dateFormat = { day: "numeric", month: "numeric" };
-
-  const weekLabel = document.querySelector("#calendar-week-label");
-
-  if (weekLabel) {
-    weekLabel.textContent =
-      `${monday.toLocaleDateString("fi-FI", dateFormat)}.–` +
-      `${sunday.toLocaleDateString("fi-FI", dateFormat)}`;
-  }
-
-  const dayNames = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
-
-    const dateKey = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, "0"),
-      String(date.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    const dayWalks = walks.filter((walk) => walk.date === dateKey);
-
-    const creditedMinutes = dayWalks.reduce((total, walk) => {
-      const ballMinutes = walk.ballMinutes ?? (walk.ball ? walk.duration : 0);
-      const fastMinutes = walk.fastMinutes ?? 0;
-
-      return total + walk.duration + ballMinutes + fastMinutes;
-    }, 0);
-
-    const mealPoints = dayWalks.reduce((total, walk) => {
-      if (walk.portion === "full") return total + 1;
-      if (walk.portion === "half") return total + 0.5;
-      return total;
-    }, 0);
-
-    const meals = Math.min(mealPoints, 3);
-
-    const todayKey = today.toLocaleDateString("sv-SE");
-    const isFuture = dateKey > todayKey;
-    const isToday = dateKey === todayKey;
-
-    let walkColor = "neutral";
-    let mealColor = "neutral";
-    let brainworkColor = "neutral";
-
-    const brainworkMinutes = brainworkEntries
-      .filter((entry) => entry.date === dateKey)
-      .reduce((total, entry) => total + Number(entry.minutes), 0);
-
-    if (brainworkMinutes >= 15) {
-      brainworkColor = "green";
-    } else if (brainworkMinutes >= 10) {
-      brainworkColor = "yellow";
-    } else if (brainworkMinutes >= 5) {
-      brainworkColor = "red";
-    }
-
-    if (!isFuture && !isToday && dayWalks.length > 0) {
-      walkColor =
-        dayWalks.length < 3 || creditedMinutes < 60
-          ? "red"
-          : creditedMinutes < 90
-            ? "yellow"
-            : "green";
-
-      mealColor =
-        meals >= 3
-          ? "green"
-          : meals >= 2
-            ? "yellow"
-            : meals >= 1
-              ? "red"
-              : "neutral";
-    } else if (isToday) {
-      walkColor =
-        dayWalks.length >= 3 && creditedMinutes >= 90
-          ? "green"
-          : dayWalks.length >= 3 && creditedMinutes >= 60
-            ? "yellow"
-            : dayWalks.length > 0
-              ? "red"
-              : "neutral";
-
-      mealColor =
-        meals >= 3
-          ? "green"
-          : meals >= 2
-            ? "yellow"
-            : meals >= 1
-              ? "red"
-              : "neutral";
-    }
-
-    const day = document.createElement("div");
-    day.className = `calendar-day${isToday ? " is-today" : ""}`;
-
-    const name = document.createElement("span");
-    name.className = "calendar-day-name";
-    name.textContent = dayNames[i];
-
-    const number = document.createElement("span");
-    number.className = "calendar-day-number";
-    number.textContent = date.getDate();
-
-    const marks = document.createElement("div");
-    marks.className = "calendar-marks";
-
-    const walkMark = document.createElement("span");
-    walkMark.className = `calendar-icon icon-walk status-${walkColor}`;
-    walkMark.style.maskImage = `url("${lightningIcon}")`;
-    walkMark.style.webkitMaskImage = `url("${lightningIcon}")`;
-    walkMark.title = "Lenkit";
-
-    const mealMark = document.createElement("span");
-    mealMark.className = `calendar-icon icon-meal status-${mealColor}`;
-    mealMark.style.maskImage = `url("${boneIcon}")`;
-    mealMark.style.webkitMaskImage = `url("${boneIcon}")`;
-    mealMark.title = "Ruoka";
-
-    const brainworkMark = document.createElement("span");
-    brainworkMark.className = `calendar-icon icon-brainwork status-${brainworkColor}`;
-    brainworkMark.style.maskImage = `url("${lightbulbIcon}")`;
-    brainworkMark.style.webkitMaskImage = `url("${lightbulbIcon}")`;
-    brainworkMark.title = "Aivojumppa";
-
-    marks.append(walkMark, mealMark, brainworkMark);
-    day.append(name, number, marks);
-    calendar.append(day);
-  }
 }
 
+// --- Achievement pages and navigation ---
 let activeAchievementTab = "shared";
 
+// Show one of the two main views without reloading the application.
+function toggleDiaryView(isVisible) {
+  const diaryMain = document.querySelector("#diary-main");
+  const allAchievementsView = document.querySelector("#all-achievements-view");
+
+  if (diaryMain) diaryMain.hidden = !isVisible;
+  if (allAchievementsView) allAchievementsView.hidden = isVisible;
+}
+
+// Render the selected achievement tab using the latest walk and brainwork entries.
 function renderAllAchievementsPage() {
   renderAllAchievements(
     getWalks(),
@@ -554,20 +442,16 @@ function renderAllAchievementsPage() {
   );
 }
 
-// Avaa kaikki palkinnot
-document
-  .querySelector("#achievements-showcase")
-  .addEventListener("click", (event) => {
+// Open the full achievement view from its button in the compact showcase.
+document.querySelector("#achievements-showcase").addEventListener("click", (event) => {
     if (!event.target.closest("#show-all-achievements")) return;
 
-    document.querySelector("#diary-main").hidden = true;
-    document.querySelector("#all-achievements-view").hidden = false;
-
+    toggleDiaryView(false);
     activeAchievementTab = "shared";
     renderAllAchievementsPage();
   });
 
-// Vaihda palkintojen välilehteä
+// Change the selected group/person tab in the full achievement view.
 document
   .querySelector("#all-achievements-view")
   .addEventListener("click", (event) => {
@@ -578,12 +462,12 @@ document
     renderAllAchievementsPage();
   });
 
-// Palaa päiväkirjaan
+// Return to the diary's main dashboard.
 document.querySelector("#back-to-diary").addEventListener("click", () => {
-  document.querySelector("#all-achievements-view").hidden = true;
-  document.querySelector("#diary-main").hidden = false;
+  toggleDiaryView(true);
 });
 
+// Move the calendar by whole weeks; selecting the current week resets the offset.
 document.querySelector("#previous-week").addEventListener("click", () => {
   selectedWeekOffset--;
   renderWeekCalendar();
@@ -599,18 +483,20 @@ document.querySelector("#next-week").addEventListener("click", () => {
   renderWeekCalendar();
 });
 
+// --- Diary bootstrap and auth state ---
 let diaryInitialized = false;
 
 const greetings = [
-  (name) => `Terve, ${name}! 🐶`,
-  (name) => `Terve taas, ${name}, valmiina lenkille? 🐾`,
-  (name) => `Moikka ${name}! Pidetään hauska päivä yhdessä. 💚`,
-  (name) => `Päivän tassutehtävät kutsuvat, ${name}! 🐾`,
-  (name) => `Hei ${name}, mukava nähdä taas! 🦴`,
-  (name) => `Moikka ${name}! Mitä kivaa tänään keksitään? 🐕`,
-  (name) => `Moi ${name}! Aika laittaa häntä heilumaan ja tassut töihin! 🐾`,
+  (name) => `Terve, ${name}!`,
+  (name) => `Terve taas, ${name}, valmiina lenkille?`,
+  (name) => `Moikka ${name}! Pidetään hauska päivä yhdessä.`,
+  (name) => `Päivän tassutehtävät kutsuvat, ${name}!`,
+  (name) => `Hei ${name}, mukava nähdä taas!`,
+  (name) => `Moikka ${name}! Mitä kivaa tänään keksitään?`,
+  (name) => `Moi ${name}! Aika laittaa häntä heilumaan ja tassut töihin!`,
 ];
 
+// Personalize the welcome text using the signed-in account and a random greeting.
 async function updateWelcomeGreeting() {
   const { data, error } = await supabase.auth.getUser();
 
@@ -634,6 +520,7 @@ async function updateWelcomeGreeting() {
     randomGreeting(name);
 }
 
+// Initialize feature modules once after authentication; later auth events reuse them.
 function initDiary() {
   if (diaryInitialized) return;
 
@@ -653,6 +540,7 @@ const loginForm = document.querySelector("#login-form");
 const loginMessage = document.querySelector("#login-message");
 const diaryView = document.querySelector("#diary-view");
 
+// Check the active Supabase session and show the matching top-level application view.
 async function updateLoginView() {
   const {
     data: { session },
@@ -672,6 +560,7 @@ async function updateLoginView() {
   }
 }
 
+// Submit credentials, show progress/errors, then switch to the diary on success.
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -695,6 +584,7 @@ loginForm.addEventListener("submit", async (event) => {
   await updateLoginView();
 });
 
+// Keep the visible login/diary view in sync when Supabase changes the session.
 supabase.auth.onAuthStateChange(() => {
   updateLoginView();
 });
@@ -703,6 +593,7 @@ updateLoginView();
 
 const logoutButton = document.querySelector("#logout-button");
 
+// Sign out and reload so user-specific module state and realtime channels are cleared.
 logoutButton.addEventListener("click", async () => {
   logoutButton.disabled = true;
   logoutButton.textContent = "Kirjaudutaan ulos...";
@@ -716,6 +607,8 @@ logoutButton.addEventListener("click", async () => {
     return;
   }
 
-  logoutButton.disabled = false;
-  logoutButton.textContent = "Kirjaudu ulos";
+  // Uloskirjautuminen onnistui.
+  // Ladataan sovellus uudelleen, jotta vanhan käyttäjän
+  // tiedot, moduulien tila ja Realtime-kanavat tyhjentyvät.
+  window.location.reload();
 });

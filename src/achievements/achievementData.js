@@ -9,7 +9,11 @@ import walk10Badge from "../assets/badges/walk10.svg";
 import forestBadge from "../assets/badges/forest.svg";
 import dogDayBadge from "../assets/badges/dogDay.svg";
 import dogParkBadge from "../assets/badges/dogPark.svg";
+import campingBadge from "../assets/badges/camping.svg";
+import waterBadge from "../assets/badges/water.svg";
+import fieldBadge from "../assets/badges/field.svg";
 
+// Centralized achievement definitions used by progress calculations and badge views.
 export const achievementGroups = [
   {
     id: "shared",
@@ -105,6 +109,27 @@ export const achievementGroups = [
         name: "Puistopäivä",
         description: "Käykää koirapuistossa.",
         icon: dogParkBadge,
+        milestone: null,
+      },
+      {
+        id: "camping",
+        name: "Retkellä",
+        description: "Tehkää retki eväiden kanssa.",
+        icon: campingBadge,
+        milestone: null,
+      },
+      {
+        id: "water",
+        name: "Veden äärellä",
+        description: "Tehkää retki veden äärellä.",
+        icon: waterBadge,
+        milestone: null,
+      },
+      {
+        id: "field",
+        name: "Avara lenkki",
+        description: "Tehkää lenkki avaralla niityllä tai pellolla.",
+        icon: fieldBadge,
         milestone: null,
       },
     ],

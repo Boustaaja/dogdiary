@@ -2,15 +2,21 @@ import { updateSummary } from "./summary.js";
 
 import { supabase } from "./supabase.js";
 
+// Walk module: owns the walk-record lifecycle, timer flow and selected-day rendering.
+// The data model is intentionally kept close to the UI so changes in the walk form and
+// summary cards stay easy to follow without needing a separate larger framework.
 let walks = [];
 let diaryId = null;
 let walksChannel = null;
 
+// Expose the latest in-memory walks to the calendar and achievement modules.
 export function getWalks() {
   return walks;
 }
 
+// Connect the walk controls, data loading, timer and form to the diary UI.
 export function initWalks(updateCalendar) {
+  // Map the authenticated account to the name used on walk records.
   async function getLoggedInWalker() {
     const { data, error } = await supabase.auth.getUser();
 
@@ -28,6 +34,7 @@ export function initWalks(updateCalendar) {
     return "";
   }
 
+  // Load this diary's walks, normalize database fields and refresh dependent views.
   async function loadWalks() {
     const { data: membership, error: membershipError } = await supabase
       .from("diary_members")
@@ -76,11 +83,13 @@ export function initWalks(updateCalendar) {
     subscribeToWalks();
   }
 
+  // --- Walk list and selected-day state ---
   const walkList = document.querySelector("#walk-list");
   const addWalkButton = document.querySelector("#add-walk");
 
   const today = new Date().toLocaleDateString("sv-SE");
 
+  // Day navigation is intentionally limited to the recent diary history to avoid invalid dates.
   function shiftDate(dateString, days) {
     const [year, month, day] = dateString.split("-").map(Number);
     const date = new Date(year, month - 1, day);
@@ -127,6 +136,7 @@ export function initWalks(updateCalendar) {
 
   const selectedDateInput = dayNavigation.querySelector("#selected-walk-date");
 
+  // Change the selected date only when it is within the supported history window.
   function setSelectedDate(date) {
     if (date < earliestDate || date > today) return;
 
@@ -141,6 +151,7 @@ export function initWalks(updateCalendar) {
     renderWalks();
   }
 
+  // Keep the date input and walk list synchronized with the day-navigation controls.
   document.querySelector("#previous-day").addEventListener("click", () => {
     setSelectedDate(shiftDate(selectedDate, -1));
   });
@@ -169,6 +180,7 @@ export function initWalks(updateCalendar) {
   let walkTimerInterval = null;
   let measuredWalk = null;
 
+  // Timer helpers keep the elapsed time display consistent across start/stop cycles.
   function getCurrentTime() {
     const now = new Date();
 
@@ -179,6 +191,7 @@ export function initWalks(updateCalendar) {
     );
   }
 
+  // Recalculate the display from elapsed milliseconds so timer ticks do not accumulate drift.
   function updateWalkTimer() {
     const currentSessionMs =
       walkStartTimestamp !== null ? Date.now() - walkStartTimestamp : 0;
@@ -197,6 +210,7 @@ export function initWalks(updateCalendar) {
       `${String(seconds).padStart(2, "0")}`;
   }
 
+  // Start and stop the measured walk while preventing a second timer from being started.
   startWalkTimerButton.addEventListener("click", () => {
     if (walkStartTimestamp !== null || measuredWalk !== null) return;
 
@@ -238,6 +252,7 @@ export function initWalks(updateCalendar) {
   addWalkButton.disabled = true;
   addWalkButton.title = "Ladataan yhteistä päiväkirjaa...";
 
+  // Calculate elapsed minutes, including walks that cross midnight.
   function getWalkDuration(start, end) {
     const [startHour, startMinute] = start.split(":").map(Number);
     const [endHour, endMinute] = end.split(":").map(Number);
@@ -252,6 +267,24 @@ export function initWalks(updateCalendar) {
     return endTotal - startTotal;
   }
 
+  // Include ball and fast-activity minutes in the credited total used for walk labels.
+  function getWalkCreditMetrics(walk) {
+    const ballMinutes = walk.ballMinutes ?? (walk.ball ? walk.duration : 0);
+    const fastMinutes = walk.fastMinutes ?? 0;
+    const creditedMinutes =
+      Number(walk.duration) + Number(ballMinutes) + Number(fastMinutes);
+
+    return { ballMinutes, fastMinutes, creditedMinutes };
+  }
+
+  // Translate the saved portion value into the label shown beside a walk.
+  function getWalkMealLabel(walk) {
+    if (walk.portion === "full") return "Täysi annos";
+    if (walk.portion === "half") return "Puolikas annos";
+    return "Ei ruokaa";
+  }
+
+  // Duration buckets only affect the visual label; the actual eligibility is calculated elsewhere.
   function getWalkCategory(minutes) {
     if (minutes < 15) return { name: "Lyhyt", color: "red" };
     if (minutes < 30) return { name: "Keskipitkä", color: "orange" };
@@ -260,6 +293,7 @@ export function initWalks(updateCalendar) {
     return { name: "Extra-pitkä", color: "green" };
   }
 
+  // Refresh the in-memory list when the same diary is updated elsewhere in real time.
   function subscribeToWalks() {
     if (walksChannel) {
       return;
@@ -274,6 +308,7 @@ export function initWalks(updateCalendar) {
           schema: "public",
           table: "walks",
         },
+        // Any database change refreshes the local list and dependent summaries.
         (payload) => {
           loadWalks();
         },
@@ -281,6 +316,7 @@ export function initWalks(updateCalendar) {
       .subscribe((status) => {});
   }
 
+  // Persist the completed walk to the diary so it is included in both statistics and achievements.
   async function saveWalk(walk) {
     if (!diaryId) {
       alert(
@@ -311,6 +347,7 @@ export function initWalks(updateCalendar) {
     return true;
   }
 
+  // Ask for confirmation, delete the selected walk and reload the diary data.
   async function deleteWalk(walk) {
     const confirmed = confirm(
       `Haluatko varmasti poistaa lenkin ${walk.start}–${walk.end}?`,
@@ -333,6 +370,7 @@ export function initWalks(updateCalendar) {
     await loadWalks();
   }
 
+  // Render only the selected day so the summary does not mix unrelated dates.
   function renderWalks() {
     walkList.innerHTML = "";
 
@@ -344,9 +382,8 @@ export function initWalks(updateCalendar) {
     }
 
     dayWalks.forEach((walk) => {
-      const ballMinutes = walk.ballMinutes ?? (walk.ball ? walk.duration : 0);
-      const fastMinutes = walk.fastMinutes ?? 0;
-      const creditedMinutes = walk.duration + ballMinutes + fastMinutes;
+      const { ballMinutes, fastMinutes, creditedMinutes } =
+        getWalkCreditMetrics(walk);
       const category = getWalkCategory(creditedMinutes);
 
       const item = document.createElement("article");
@@ -364,8 +401,8 @@ export function initWalks(updateCalendar) {
       const details = document.createElement("span");
       details.textContent =
         `${walk.walker} · ${walk.duration} min` +
-        ` · 🟡 ${ballMinutes} min` +
-        ` · ⚡ ${fastMinutes} min`;
+        ` · Pallottelua ${ballMinutes} min` +
+        ` · Teholiikuntaa ${fastMinutes} min`;
 
       info.append(title, details);
 
@@ -378,14 +415,7 @@ export function initWalks(updateCalendar) {
 
       const duration = document.createElement("span");
       duration.className = "walk-duration";
-
-      if (walk.portion === "full") {
-        duration.textContent = "🍽️ Täysi annos";
-      } else if (walk.portion === "half") {
-        duration.textContent = "🍽️ Puolikas annos";
-      } else {
-        duration.textContent = "Ei ruokaa";
-      }
+      duration.textContent = getWalkMealLabel(walk);
 
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
@@ -396,6 +426,7 @@ export function initWalks(updateCalendar) {
         `Poista lenkki ${walk.start}–${walk.end}`,
       );
 
+      // Remove only the walk represented by this row.
       deleteButton.addEventListener("click", async () => {
         await deleteWalk(walk);
       });
@@ -407,6 +438,7 @@ export function initWalks(updateCalendar) {
     updateSummary(dayWalks);
   }
 
+  // Build and wire the add-walk form only when requested, including validation and timer values.
   addWalkButton.addEventListener("click", () => {
     const existingForm = document.querySelector("#walk-form");
 
@@ -504,6 +536,7 @@ export function initWalks(updateCalendar) {
       endInput.value = measuredWalk.end || "";
     }
 
+    // Suggest a 15-minute end time when the user enters a start time.
     startInput.addEventListener("input", () => {
       if (!startInput.value) return;
 
@@ -518,6 +551,7 @@ export function initWalks(updateCalendar) {
       updatePreview();
     });
 
+    // Changing the form date also changes which day's walks are shown behind the form.
     form.elements.date.addEventListener("change", () => {
       const date = form.elements.date.value;
 
@@ -533,6 +567,7 @@ export function initWalks(updateCalendar) {
 
     walkerSelect.disabled = true;
 
+    // Preselect the authenticated walker and prevent editing another user's identity.
     getLoggedInWalker().then((walker) => {
       if (!walker) {
         walkerSelect.value = "";
@@ -548,6 +583,7 @@ export function initWalks(updateCalendar) {
     const fastMinutesInput = form.elements.fastMinutes;
     const preview = form.querySelector("#walk-preview");
 
+    // Keep the live preview aligned with the same duration and credit rules used when saving.
     function updatePreview() {
       if (!startInput.value || !endInput.value) {
         preview.textContent = "Valitse lähtö- ja paluuaika.";
@@ -585,12 +621,14 @@ export function initWalks(updateCalendar) {
     ballMinutesInput.addEventListener("input", updatePreview);
     fastMinutesInput.addEventListener("input", updatePreview);
 
+    // Cancel the draft and clear any timer interval without saving a walk.
     form.querySelector("#cancel-walk").addEventListener("click", () => {
       clearInterval(walkTimerInterval);
       walkTimerInterval = null;
       form.remove();
     });
 
+    // Validate the completed form before saving and return the timer controls to their initial state.
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 

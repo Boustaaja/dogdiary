@@ -7,7 +7,7 @@
   align-items: center;
   gap: 20px;
   padding: 24px;
-  border: 3px solid #e5a04b;
+  border: 3px solid var(--accent);
   border-radius: 16px;
   background: #f8f7f6;
   box-shadow:
@@ -47,9 +47,11 @@ img.daily-task-badge {
   box-sizing: border-box;
 }
 
-.daily-task-badge.locked svg {
-  width: 32px;
-  height: 32px;
+.daily-task-badge.locked img {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
 }
 
 .daily-task-info {
@@ -59,7 +61,7 @@ img.daily-task-badge {
 
 .daily-task-label {
   margin: 0 0 6px;
-  color: #b96f2d;
+  color: var(--accent-dark);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -80,9 +82,9 @@ img.daily-task-badge {
 
 #complete-daily-task {
   padding: 10px 16px;
-  border: 1px solid #c97928;
+  border: 1px solid var(--accent-dark);
   border-radius: 10px;
-  background: #d98a3b;
+  background: var(--accent);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -93,7 +95,7 @@ img.daily-task-badge {
 }
 
 #complete-daily-task:hover:not(:disabled) {
-  background: #b96f2d;
+  background: var(--accent-dark);
   transform: translateY(-1px);
 }
 
@@ -117,7 +119,7 @@ img.daily-task-badge {
   font-size: 11px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .daily-task-card {
     gap: 12px;
     padding: 16px;
@@ -136,9 +138,9 @@ img.daily-task-badge {
     border-radius: 13px;
   }
 
-  .daily-task-badge.locked svg {
-    width: 28px;
-    height: 28px;
+  .daily-task-badge.locked img {
+    width: 56px;
+    height: 56px;
   }
 
   .daily-task-info h2 {

@@ -46,7 +46,6 @@
   font-size: 15px;
 }
 
-/* Vitriini: kuusi korttia rinnakkain */
 .achievement-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -58,25 +57,37 @@
 .achievement-card {
   display: flex;
   min-width: 0;
+  min-height: 200px;
+  height: auto;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 14px 10px;
-  border: 1px solid #d8dcd4;
-  border-radius: 14px;
+  border: 3px solid var(--accent);
+  border-radius: 16px;
   background: #f4f5f2;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 5%);
+  box-shadow:
+    inset 0 0 0 2px #fff8e9,
+    0 3px 8px rgb(180 105 35 / 12%);
   text-align: center;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 .achievement-card.is-unlocked {
-  background: #ffffff;
-  border-color: #b5c8ae;
+  border-color: var(--accent);
+  background: #fffaf0;
+  box-shadow:
+    inset 0 0 0 2px #f8dfb5,
+    0 3px 10px rgb(210 126 35 / 18%);
 }
 
 .achievement-card.is-locked {
-  background: #f4f5f2;
-  border-color: #d8dcd4;
+  border-color: #c9c4b8;
+  background: #f3f3ee;
+  box-shadow:
+    inset 0 0 0 2px #e4e4dc,
+    0 2px 5px rgb(0 0 0 / 5%);
 }
 
 .achievement-icon {
@@ -103,17 +114,21 @@
   color: #85877f;
 }
 
-.achievement-card.is-locked .achievement-icon svg {
-  width: 32px;
-  height: 32px;
+.achievement-lock-icon {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
 }
 
 .achievement-name {
+  max-width: 100%;
   margin: 0;
   font-size: 12px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.3;
   overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .achievement-status {
@@ -151,15 +166,13 @@
   transition: width 0.25s ease;
 }
 
-/* Keskikokoiset näytöt */
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .achievement-grid {
     grid-template-columns: repeat(4, minmax(0, 180px));
   }
 }
 
-/* Pienet näytöt */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .achievements-panel {
     padding: 18px;
     border-radius: 18px;
@@ -171,12 +184,18 @@
   }
 
   .achievement-card {
+    min-height: 155px;
     padding: 10px 5px;
     border-radius: 13px;
   }
 
   .achievement-icon {
     height: 85px;
+  }
+
+  .achievement-lock-icon {
+    width: 80px;
+    height: 80px;
   }
 
   .achievement-image {
@@ -188,8 +207,7 @@
   .achievement-name {
     font-size: 11px;
   }
-}
-@media (max-width: 700px) {
+
   .achievement-progress-label {
     align-items: center;
     white-space: nowrap;
@@ -200,64 +218,7 @@
     flex-shrink: 0;
   }
 }
-/* Palkintokorttien näyttävä kehys */
-.achievement-card {
-  border: 3px solid #e5a04b;
-  border-radius: 16px;
-  box-shadow:
-    inset 0 0 0 2px #fff8e9,
-    0 3px 8px rgb(180 105 35 / 12%);
-}
 
-/* Avattu palkinto */
-.achievement-card.is-unlocked {
-  border-color: #e99532;
-  background: #fffaf0;
-  box-shadow:
-    inset 0 0 0 2px #f8dfb5,
-    0 3px 10px rgb(210 126 35 / 18%);
-}
-
-/* Lukittu palkinto */
-.achievement-card.is-locked {
-  border-color: #c9c4b8;
-  background: #f3f3ee;
-  box-shadow:
-    inset 0 0 0 2px #e4e4dc,
-    0 2px 5px rgb(0 0 0 / 5%);
-}
-/* Palkintokorttien sisältö pysyy kortin sisällä */
-.achievement-card {
-  min-height: 200px;
-  height: auto;
-  min-width: 0;
-  box-sizing: border-box;
-  overflow-wrap: anywhere;
-}
-
-.achievement-name {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  line-height: 1.3;
-}
-
-/* Mobiilin asettelu */
-@media (max-width: 700px) {
-  .achievement-card {
-    min-height: 155px;
-    height: auto;
-  }
-
-  .achievement-icon {
-    height: 65px;
-  }
-
-  .achievement-image {
-    max-width: 65px;
-    max-height: 65px;
-  }
-}
 
 .achievement-progress {
   margin-top: 4px;
@@ -269,7 +230,7 @@
 
 .achievement-earned-count {
   margin: -4px 0 0;
-  color: #e99532;
+  color: var(--accent);
   font-family: Manrope, sans-serif;
   font-size: 18px;
   font-weight: 900;
@@ -280,14 +241,9 @@
 .achievement-image {
   position: relative;
 }
-/* Tiiviimpi asettelu badge-kortissa */
+
 .achievement-card {
   gap: 4px;
-}
-
-.achievement-earned-count {
-  margin: -4px 0 0;
-  line-height: 1;
 }
 
 .achievement-name {
@@ -297,7 +253,7 @@
 .achievement-status {
   line-height: 1;
 }
-/* Saavutuskuvien keskitys kaikissa näkymissä */
+
 .achievement-icon {
   display: flex;
   align-items: center;
@@ -317,4 +273,154 @@
 .achievement-card-detailed .achievement-icon .achievement-image {
   max-width: 100%;
   max-height: 100%;
+}
+
+/* Palkintojen valintaikkuna */
+.achievement-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 55%);
+}
+
+.achievement-picker {
+  width: min(700px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 25%);
+}
+
+.achievement-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.achievement-picker-title {
+  margin: 0;
+  font-family: Manrope, sans-serif;
+  font-size: 20px;
+}
+
+.achievement-picker-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f3ee;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.achievement-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.achievement-picker-option {
+  position: relative;
+  min-width: 0;
+  padding: 10px;
+  border: 2px solid #d8dcd4;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.achievement-picker-option.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.achievement-picker-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.achievement-picker-option img {
+  display: block;
+  width: 70px;
+  height: 70px;
+  max-width: 100%;
+  margin: 0 auto 8px;
+  object-fit: contain;
+}
+
+.achievement-picker-option-name {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .achievement-picker {
+    padding: 16px;
+  }
+
+  .achievement-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+.achievement-slot-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.achievement-slot-trigger:disabled {
+  cursor: default;
+}
+
+.achievement-slot-trigger:not(:disabled):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.all-achievement-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.all-achievement-button:hover {
+  background: #e48212;
+}
+
+.all-achievement-button.is-selected {
+  background: #e1b267;
 }

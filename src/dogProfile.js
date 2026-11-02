@@ -1,6 +1,8 @@
 import defaultDogAvatar from "./assets/Images/brand.png";
 import { supabase } from "./supabase.js";
 
+// Dog profile management: name, avatar and diary-level profile state.
+// Set up profile fields and keep the shared profile synchronized across users.
 export function initDogProfile() {
   const dogPhotoInput = document.querySelector("#dog-photo");
   const dogAvatar = document.querySelector("#dog-avatar");
@@ -14,11 +16,13 @@ export function initDogProfile() {
   dogAvatar.src = defaultDogAvatar;
   dogNameDisplay.textContent = "Oma koira";
 
+  // Return from edit mode to the regular dog-name display.
   function showDogName() {
     dogNameInput.hidden = true;
     dogNameDisplay.hidden = false;
   }
 
+  // Open the name field and focus it so the user can edit the profile inline.
   function editDogName() {
     dogNameDisplay.hidden = true;
     dogNameInput.hidden = false;
@@ -26,6 +30,7 @@ export function initDogProfile() {
     dogNameInput.focus();
   }
 
+  // Fetch the diary profile, creating a default record if this diary has none yet.
   async function loadDogProfile() {
     const { data, error } = await supabase
       .from("dog_profile")
@@ -79,6 +84,7 @@ export function initDogProfile() {
     dogAvatar.src = imageData.signedUrl;
   }
 
+  // Save a changed dog name and restore the previous value if the update fails.
   async function saveDogName() {
     const name = dogNameInput.value.trim();
 
@@ -105,6 +111,7 @@ export function initDogProfile() {
     showDogName();
   }
 
+  // Validate and upload a profile image, then update the shared profile record.
   async function uploadDogPhoto(file) {
     if (!file) return;
 
@@ -166,6 +173,7 @@ export function initDogProfile() {
     dogPhotoInput.value = "";
   }
 
+  // Support both pointer and keyboard access to inline name editing.
   dogNameDisplay.addEventListener("click", editDogName);
 
   dogNameDisplay.addEventListener("keydown", (event) => {
@@ -193,6 +201,7 @@ export function initDogProfile() {
     uploadDogPhoto(dogPhotoInput.files[0]);
   });
 
+  // Resolve the shared diary and subscribe to profile changes from either user.
   async function initializeProfile() {
     const { data: membership, error: membershipError } = await supabase
       .from("diary_members")
